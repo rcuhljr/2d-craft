@@ -25,3 +25,11 @@ world_blocks[149][57] = 'grass';
 world_blocks[151][57] = 'grass';
 world_blocks[148][56] = 'grass';
 world_blocks[152][56] = 'grass';
+
+for (var i = 0; i < 60; i++){
+	
+		world_blocks[20+i][57-i] = 'grass';
+	
+}
+
+world_blocks[2][59] = null;

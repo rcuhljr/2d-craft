@@ -19,29 +19,69 @@ var player = {
     moving_left:false,
     };
 
-var pixels_per_block = 5;
+var pixels_per_block = 10;
 var clock_rate = 35;
-var gravity = 20;
-var terminal_velocity =300;
-var run_speed = 150;
+var gravity = 2*pixels_per_block;
+var run_accel = pixels_per_block;
+var terminal_velocity =60*pixels_per_block;
+var run_speed = 30*pixels_per_block;
+var view_blocks = [[0,0],[1,1]];
+var view_offset = [0,0];
+var world_coords = [pixels_per_block*200, pixels_per_block*120];
+
+var reset_position = function(){
+	if(player.exactx > world_coords[0] || player.exactx < 0){
+		player.exactx = 400;
+	}
+	if(player.exacty > world_coords[1]){
+		player.exacty = 200;
+	}
+}
 
 var draw_background = function(){
 	viewport.context.fillStyle = palettes.sky;
 	viewport.context.fillRect(0, 0, viewport.width, viewport.height);
 }
 
+var determine_viewport = function(){
+	var halfwidth = viewport.width/2;
+	var halfheight = viewport.height/2;
+	if(player.x() < halfwidth){
+		view_offset[0] = 0;
+	}else if(player.x() > world_coords[0]-halfwidth){
+		view_offset[0] = world_coords[0]-viewport.width;
+	}else{
+		view_offset[0] = player.x()-halfwidth;
+	}
+
+	if(player.y() < halfheight){
+		view_offset[1] = 0;
+	}else if(player.y() > world_coords[1]-halfheight){
+		view_offset[1] = world_coords[1]-viewport.height;
+	}else{
+		view_offset[1] = player.y()-halfheight;
+	}
+	
+	xblocks = Math.ceil(viewport.width/pixels_per_block);
+	yblocks = Math.ceil(viewport.height/pixels_per_block);
+
+	var upper_left = [Math.floor(view_offset[0]/pixels_per_block),Math.floor(view_offset[1]/pixels_per_block)]
+	var lower_right = [Math.ceil((view_offset[0]+viewport.width)/pixels_per_block)-1,Math.ceil((view_offset[1]+viewport.height)/pixels_per_block)-1]
+	view_blocks = [upper_left, lower_right];
+}
+
 var draw_blocks = function(){
-	for(var x in world_blocks){
-		for(var y in world_blocks[x]){
+	for(var x = view_blocks[0][0]; x <= view_blocks[1][0]; x++){
+		for(var y = view_blocks[0][1]; y <= view_blocks[1][1]; y++){
 			if(world_blocks[x][y])
-			draw_block(x*pixels_per_block, y*pixels_per_block, palettes.grass);
+				draw_block(x*pixels_per_block, y*pixels_per_block, palettes.grass);
 		}
 	}
 }
 
 var draw_block = function(x, y, color){
 	viewport.context.fillStyle = color;
-	viewport.context.fillRect(x,y,pixels_per_block, pixels_per_block);
+	viewport.context.fillRect(x-view_offset[0],y-view_offset[1],pixels_per_block, pixels_per_block);
 }
 
 var draw_player = function(){
@@ -52,10 +92,10 @@ var apply_gravity = function(){
 	player.yvel += gravity;
 	if(player.yvel > terminal_velocity){player.yvel = terminal_velocity}
 	if(player.moving_right){
-		player.xvel += gravity;
+		player.xvel += run_accel;
 		if(player.xvel > run_speed){player.xvel = run_speed}
 	}else if(player.moving_left){
-		player.xvel -= gravity;
+		player.xvel -= run_accel;
 		if(player.xvel < -1*run_speed){player.xvel = -1*run_speed}
 	}
 }
@@ -162,7 +202,7 @@ var keydown = function(code){
 	{
 		player.moving_left = true;		
 	}else if(key == 38 && block_below(player.x(), player.y()+1)){		
-		player.yvel = -10*gravity;
+		player.yvel = -15*gravity;
 	}
 };
 
@@ -202,12 +242,14 @@ var last_time = Date.now();
 var frame_count = 0;
 var fps = 0;
 
-var main_loop = function(delay){		
-	var start_time = Date.now();
-	draw_background();
-	draw_blocks();
+var main_loop = function(delay){			
+	var start_time = Date.now();	
+	reset_position();
 	apply_gravity();
 	move_player();
+	determine_viewport();
+	draw_background();
+	draw_blocks();
 	draw_player();
 	draw_fps();	
 	setTimeout(function() {

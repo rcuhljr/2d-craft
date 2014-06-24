@@ -30,10 +30,19 @@ var build_world = function(args){
 	var new_world = [];
 	var land_height = y/3;
 
+	var deltay = 0
+	var deltax = 0
+
 	for (var i = 0; i < x; i++)
 	{
 		new_world.push([])
-		land_height += Math.floor(Math.random()*7)-3;
+		if(deltax === 0){
+			deltay = Math.floor(Math.random()*7)-3;
+			deltax = Math.floor(Math.random()*10+1);
+		}
+		land_height += deltay/deltax;
+		deltay -= deltay/deltax;
+		deltax -= 1;
 		land_height = Math.min(Math.max(y/3-15, land_height), y/3+15);
 		for (var j = 0; j < y; j++)
 		{
@@ -47,9 +56,36 @@ var build_world = function(args){
 		}
 	}
 
+	place_rocks(x,y,new_world);
+
 
 
 	return new_world;
+}
+
+var place_rocks = function(x,y, world){
+	var seeds = x*y/Math.pow(30,2);
+	while(seeds > 0){
+		var width = Math.floor(Math.random()*10+1);
+		var height = Math.floor(Math.random()*10+1);
+
+		var seed_x = Math.max(Math.floor(Math.random()*x)-width,0);
+		var seed_y = Math.max(Math.floor(Math.random()*y)-height, 0);
+
+		var dist = (Math.pow(width/2,2)+Math.pow(height/2,2))*.6;
+
+		for(var i = 0; i <= width; i++){
+			for(var j = 0; j <= height; j++){				
+				if(Math.pow(i-width/2,2)+Math.pow(j-height/2,2) < dist){
+					if(world[seed_x+i][seed_y+j]){
+						world[seed_x+i][seed_y+j] = build_rock(seed_x+i, seed_y+j);
+					}
+				}
+			}
+		}
+
+		seeds--;
+	}
 }
 
 var build_grass = function(x,y){
@@ -57,7 +93,7 @@ var build_grass = function(x,y){
 }
 
 var build_rock = function(x,y){
-	return new Block('rock', 2, x, y);
+	return new Block('rock', 3, x, y);
 }
 
 

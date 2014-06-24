@@ -22,7 +22,7 @@ var player = {
     moving_left:false,
     };
 
-var cursor_modes = {mining:"Mining", explorer:"Explorer"};
+var cursor_modes = {mining:"Mining", explorer:"Explorer", placing:"Place Blocks"};
 
 var cursor_mode = cursor_modes.mining;
 
@@ -81,7 +81,7 @@ var draw_blocks = function(){
 	for(var x = view_blocks[0][0]; x <= view_blocks[1][0]; x++){
 		for(var y = view_blocks[0][1]; y <= view_blocks[1][1]; y++){
 			if(world_blocks[x][y])
-				draw_block(x*pixels_per_block, y*pixels_per_block, palettes[world_blocks[x][y]]);
+				draw_block(x*pixels_per_block, y*pixels_per_block, palettes[world_blocks[x][y].type]);
 		}
 	}
 }
@@ -201,15 +201,15 @@ var move_player = function(){
 }
 
 var keydown = function(code){
-	//console.log(code.keyCode);
+	console.log(code.keyCode);
 	var key = code.keyCode;
-	if(key == 39) //right
+	if(key == 39 || key ==68) //right
 	{
 		player.moving_right = true;		
-	}else if(key == 37) //left
+	}else if(key == 37 || key == 65) //left
 	{
 		player.moving_left = true;		
-	}else if(key == 38 && block_below(player.x(), player.y()+1)){		
+	}else if((key == 38 || key == 87) && block_below(player.x(), player.y()+1)){		
 		player.yvel = -15*gravity;
 	}else if(key == 49) //1
 	{
@@ -217,15 +217,19 @@ var keydown = function(code){
 	}else if(key == 50) //2
 	{
 		cursor_mode = cursor_modes.explorer;
+	}else if(key == 51) //2
+	{
+		cursor_mode = cursor_modes.placing;
 	}
+
 };
 
 var keyup = function(code){
 	var key = code.keyCode;
-	if(key == 39 || key == 37)
+	if(key == 39 || key == 37 || key == 65 || key == 68)
 	{
 		player.xvel = 0;	
-		if(key == 39)	{
+		if(key == 39 || key == 68)	{
 			player.moving_right = false;
 		}else{
 			player.moving_left = false;	
@@ -237,9 +241,13 @@ document.onkeydown = keydown;
 
 document.onkeyup = keyup;
 
+var block_coords_at_point = function(x,y){
+	return [Math.floor(x/pixels_per_block), Math.floor(y/pixels_per_block)];
+}
+
 var get_block_at_point = function(x,y){
 	
-	var block = [Math.floor(x/pixels_per_block), Math.floor(y/pixels_per_block)];
+	var block = block_coords_at_point(x,y);
 	if(world_blocks[block[0]] && world_blocks[block[0]][block[1]]){
 		return world_blocks[block[0]][block[1]];
 	}
@@ -257,13 +265,27 @@ var try_mining = function(ev_x,ev_y){
 	}
 }
 
+var try_blocking = function(ev_x,ev_y){
+	if(Math.abs(player.x() - ev_x) > pixels_per_block*6){ return; }
+	if(Math.abs(player.y() - ev_y) > pixels_per_block*6){ return; }	
+	var block = get_block_at_point(ev_x,ev_y);
+	if(!block){
+		var coords = block_coords_at_point(ev_x, ev_y);
+		console.log('adding grass');
+		world_blocks[coords[0]][coords[1]] = new Block('grass', 2, coords[0], coords[1]);
+	}
+}
+
 var click_world = function(event){
 	var ev_x = event.x + view_offset[0]-board_top;
 	var ev_y = event.y + view_offset[1]-board_left;
 
 	if(cursor_mode === cursor_modes.mining){
 		try_mining(ev_x,ev_y);
-	}	
+	}else if(cursor_mode === cursor_modes.placing){
+		try_blocking(ev_x,ev_y);
+	}
+
 }
 
 game_board.onclick = click_world;

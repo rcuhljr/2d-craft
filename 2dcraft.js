@@ -1,8 +1,11 @@
 var game_board = document.getElementById("viewport");
 
+var board_left = game_board.offsetLeft;
+var board_top = game_board.offsetTop;
+
 var viewport = {context:game_board.getContext("2d"), width:1000, height:600};
 
-var palettes = {sky:"#C0F4FD", grass:"#00CC00", player:"FF0000"};
+var palettes = {sky:"#C0F4FD", grass:"#00CC00", player:"FF0000", invis:"#C0F4FD"};
 
 var player = {
 	x: function(){
@@ -18,6 +21,10 @@ var player = {
     moving_right:false,
     moving_left:false,
     };
+
+var cursor_modes = {mining:"Mining", explorer:"Explorer"};
+
+var cursor_mode = cursor_modes.mining;
 
 var pixels_per_block = 10;
 var clock_rate = 35;
@@ -74,7 +81,7 @@ var draw_blocks = function(){
 	for(var x = view_blocks[0][0]; x <= view_blocks[1][0]; x++){
 		for(var y = view_blocks[0][1]; y <= view_blocks[1][1]; y++){
 			if(world_blocks[x][y])
-				draw_block(x*pixels_per_block, y*pixels_per_block, palettes.grass);
+				draw_block(x*pixels_per_block, y*pixels_per_block, palettes[world_blocks[x][y]]);
 		}
 	}
 }
@@ -103,7 +110,7 @@ var apply_gravity = function(){
 var block_check = function(blocks){
 	for(var i in blocks){
 		var block = blocks[i];
-		if(world_blocks[block[0]][block[1]]){
+		if(world_blocks[block[0]] && world_blocks[block[0]][block[1]]){
 			return [block[0],block[1]];
 		}
 	}
@@ -194,6 +201,7 @@ var move_player = function(){
 }
 
 var keydown = function(code){
+	//console.log(code.keyCode);
 	var key = code.keyCode;
 	if(key == 39) //right
 	{
@@ -203,6 +211,12 @@ var keydown = function(code){
 		player.moving_left = true;		
 	}else if(key == 38 && block_below(player.x(), player.y()+1)){		
 		player.yvel = -15*gravity;
+	}else if(key == 49) //1
+	{
+		cursor_mode = cursor_modes.mining;
+	}else if(key == 50) //2
+	{
+		cursor_mode = cursor_modes.explorer;
 	}
 };
 
@@ -223,6 +237,37 @@ document.onkeydown = keydown;
 
 document.onkeyup = keyup;
 
+var get_block_at_point = function(x,y){
+	
+	var block = [Math.floor(x/pixels_per_block), Math.floor(y/pixels_per_block)];
+	if(world_blocks[block[0]] && world_blocks[block[0]][block[1]]){
+		return world_blocks[block[0]][block[1]];
+	}
+	return null;
+}
+
+var try_mining = function(ev_x,ev_y){
+	if(Math.abs(player.x() - ev_x) > pixels_per_block*5){ return; }
+	if(Math.abs(player.y() - ev_y) > pixels_per_block*5){ return; }	
+	var block = get_block_at_point(ev_x,ev_y);
+	if(block){
+		console.log(block);
+		var mine = block.mine(1);
+		if(mine){world_blocks[block.x][block.y] = null;}
+	}
+}
+
+var click_world = function(event){
+	var ev_x = event.x + view_offset[0]-board_top;
+	var ev_y = event.y + view_offset[1]-board_left;
+
+	if(cursor_mode === cursor_modes.mining){
+		try_mining(ev_x,ev_y);
+	}	
+}
+
+game_board.onclick = click_world;
+
 var draw_fps = function(){
 	if(frame_count  === 10){
 		var this_time = Date.now()
@@ -242,15 +287,24 @@ var last_time = Date.now();
 var frame_count = 0;
 var fps = 0;
 
+var draw_hud = function(){
+	viewport.context.font = '12pt Arial black';
+	viewport.context.fillStyle = 'black';	
+	viewport.context.textAlign = 'center';
+
+	viewport.context.fillText(cursor_mode, viewport.width*.75, 20);
+}
+
 var main_loop = function(delay){			
-	var start_time = Date.now();	
-	reset_position();
+	var start_time = Date.now();		
 	apply_gravity();
 	move_player();
+	reset_position();
 	determine_viewport();
 	draw_background();
 	draw_blocks();
 	draw_player();
+	draw_hud();
 	draw_fps();	
 	setTimeout(function() {
 		main_loop(delay);

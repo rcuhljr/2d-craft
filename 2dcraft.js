@@ -10,7 +10,9 @@ var board_top = game_board.offsetTop;
 
 var viewport = {context:game_board.getContext("2d"), width:1000, height:600};
 
-var palettes = {sky:"#C0F4FD", grass:"#00CC00", player:"FF0000", invis:"#C0F4FD", rock:"#D4D0C8"};
+var palettes = {sky:"#C0F4FD", grass:"#00CC00", player:"FF0000", invis:"#C0F4FD", stone:"#D4D0C8"};
+
+var inventory = {stone:0, grass:0}
 
 var player = {
 	x: function(){
@@ -28,6 +30,8 @@ var player = {
     };
 
 var cursor_modes = {mining:"Mining", explorer:"Explorer", placing:"Place Blocks"};
+
+var block_type = block_types.grass;
 
 var cursor_mode = cursor_modes.mining;
 
@@ -224,7 +228,15 @@ var keydown = function(code){
 		cursor_mode = cursor_modes.explorer;
 	}else if(key == 51) //2
 	{
-		cursor_mode = cursor_modes.placing;
+		if(cursor_mode === cursor_modes.placing){
+			if(block_type === block_types.grass){
+				block_type = block_types.stone;
+			}else{
+				block_type = block_types.grass;
+			}
+		}else{
+			cursor_mode = cursor_modes.placing;	
+		}		
 	}
 
 };
@@ -260,24 +272,31 @@ var get_block_at_point = function(x,y){
 }
 
 var try_mining = function(ev_x,ev_y){
-	if(Math.abs(player.x() - ev_x) > pixels_per_block*5){ return; }
-	if(Math.abs(player.y() - ev_y) > pixels_per_block*5){ return; }	
+	if(Math.abs(player.x() - ev_x) > pixels_per_block*6){ return; }
+	if(Math.abs(player.y() - ev_y) > pixels_per_block*6){ return; }	
 	var block = get_block_at_point(ev_x,ev_y);
 	if(block){
 		console.log(block);
 		var mine = block.mine(1);
-		if(mine){world_blocks[block.x][block.y] = null;}
+		if(mine){
+			world_blocks[block.x][block.y] = null;
+			inventory[block.type]++;			
+		}
 	}
 }
 
 var try_blocking = function(ev_x,ev_y){
+	if(inventory[block_type] === 0){
+		return;
+	}
 	if(Math.abs(player.x() - ev_x) > pixels_per_block*6){ return; }
 	if(Math.abs(player.y() - ev_y) > pixels_per_block*6){ return; }	
 	var block = get_block_at_point(ev_x,ev_y);
 	if(!block){
 		var coords = block_coords_at_point(ev_x, ev_y);
-		console.log('adding grass');
-		world_blocks[coords[0]][coords[1]] = new Block('grass', 2, coords[0], coords[1]);
+		console.log('adding '+ block_type);		
+		world_blocks[coords[0]][coords[1]] = build_block_type(coords[0], coords[1], block_type);
+		inventory[block_type]--;
 	}
 }
 
@@ -320,6 +339,10 @@ var draw_hud = function(){
 	viewport.context.textAlign = 'center';
 
 	viewport.context.fillText(cursor_mode, viewport.width*.75, 20);
+
+	if(cursor_mode === cursor_modes.placing){
+		viewport.context.fillText(block_type + ": " +inventory[block_type] , viewport.width*.75, 45);		
+	}
 }
 
 var main_loop = function(delay){			

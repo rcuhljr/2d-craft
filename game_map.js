@@ -1,4 +1,6 @@
 
+var block_types = {grass:'grass', stone:'stone'};
+
 function Block(name, strength, x, y){
 	this.type = name;
 	this.strength = strength;
@@ -56,18 +58,18 @@ var build_world = function(args){
 		}
 	}
 
-	place_rocks(x,y,new_world);
+	place_stones(x,y,new_world);
 
 
 
 	return new_world;
 }
 
-var place_rocks = function(x,y, world){
+var place_stones = function(x,y, world){
 	var seeds = x*y/Math.pow(30,2);
 	while(seeds > 0){
-		var width = Math.floor(Math.random()*10+1);
-		var height = Math.floor(Math.random()*10+1);
+		var width = Math.floor(Math.random()*15+1);
+		var height = Math.floor(Math.random()*15+1);
 
 		var seed_x = Math.max(Math.floor(Math.random()*x)-width,0);
 		var seed_y = Math.max(Math.floor(Math.random()*y)-height, 0);
@@ -78,7 +80,7 @@ var place_rocks = function(x,y, world){
 			for(var j = 0; j <= height; j++){				
 				if(Math.pow(i-width/2,2)+Math.pow(j-height/2,2) < dist){
 					if(world[seed_x+i][seed_y+j]){
-						world[seed_x+i][seed_y+j] = build_rock(seed_x+i, seed_y+j);
+						world[seed_x+i][seed_y+j] = build_stone(seed_x+i, seed_y+j);
 					}
 				}
 			}
@@ -92,28 +94,14 @@ var build_grass = function(x,y){
 	return new Block('grass', 2, x, y);
 }
 
-var build_rock = function(x,y){
-	return new Block('rock', 3, x, y);
+var build_stone = function(x,y){
+	return new Block('stone', 3, x, y);
 }
 
-
-
-// for (var i = 0; i < 200; i++){
-// 	world_blocks[i][59] = new Block('grass', 2, i, 59);
-// }
-
-// for(var i = 1; i < 10; i++){
-// 	world_blocks[0][59-i] = new Block('invis', -1, 0, 59-i);
-// 	world_blocks[199][59-i] = new Block('invis', -1, 199, 59-i);
-// }
-
-// world_blocks[150][58] = new Block('grass', 2, 150, 58);
-// world_blocks[150][57] = new Block('grass', 2, 150, 57);
-// world_blocks[149][57] = new Block('grass', 2, 149, 57);
-// world_blocks[151][57] = new Block('grass', 2, 151, 57);
-// world_blocks[148][56] = new Block('grass', 2, 148, 56);
-// world_blocks[152][56] = new Block('grass', 2, 152, 56);
-
-// for (var i = 0; i < 60; i++){	
-// 	world_blocks[20+i][57-i] = new Block('grass', 2, 20+i, 57-i);	
-//}
+var build_block_type = function(x,y,type){
+	if(type === block_types.grass){
+		return build_grass(x,y);
+	}else if(type === block_types.stone){
+		return build_stone(x.y);
+	}
+}

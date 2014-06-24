@@ -1,11 +1,16 @@
 var game_board = document.getElementById("viewport");
 
+world_width_blocks = 1500;
+world_height_blocks = 120;
+
+var world_blocks = build_world({x:world_width_blocks, y:world_height_blocks});
+
 var board_left = game_board.offsetLeft;
 var board_top = game_board.offsetTop;
 
 var viewport = {context:game_board.getContext("2d"), width:1000, height:600};
 
-var palettes = {sky:"#C0F4FD", grass:"#00CC00", player:"FF0000", invis:"#C0F4FD"};
+var palettes = {sky:"#C0F4FD", grass:"#00CC00", player:"FF0000", invis:"#C0F4FD", rock:"#D4D0C8"};
 
 var player = {
 	x: function(){
@@ -14,8 +19,8 @@ var player = {
 	y: function(){
 		return Math.floor(this.exacty);
 	}, 
-	exactx: 400,
-	exacty:200, 
+	exactx: 0,
+	exacty:0, 
 	xvel:0, 
 	yvel:0,
     moving_right:false,
@@ -34,14 +39,14 @@ var terminal_velocity =60*pixels_per_block;
 var run_speed = 30*pixels_per_block;
 var view_blocks = [[0,0],[1,1]];
 var view_offset = [0,0];
-var world_coords = [pixels_per_block*200, pixels_per_block*120];
+var world_coords = [pixels_per_block*world_width_blocks, pixels_per_block*world_height_blocks];
 
 var reset_position = function(){
 	if(player.exactx > world_coords[0] || player.exactx < 0){
-		player.exactx = 400;
+		player.exactx = 0;
 	}
 	if(player.exacty > world_coords[1]){
-		player.exacty = 200;
+		player.exacty = 0;
 	}
 }
 

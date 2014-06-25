@@ -1,12 +1,14 @@
 
-var block_types = {grass:'grass', stone:'stone'};
+var block_types = {grass:'grass', stone:'stone', water:'water'};
 
-function Block(name, strength, x, y){
+function Block(name, strength, x, y, blocks_movement){
 	this.type = name;
 	this.strength = strength;
 
 	this.x = x;
 	this.y = y;
+
+	this.blocks_movement = blocks_movement;
 
 	this.mine = null;
 	if(strength > 0){
@@ -62,7 +64,7 @@ var build_world = function(args){
 
 
 
-	return new_world;
+	return {blocks:new_world, water:[]};
 }
 
 var place_stones = function(x,y, world){
@@ -91,17 +93,31 @@ var place_stones = function(x,y, world){
 }
 
 var build_grass = function(x,y){
-	return new Block('grass', 2, x, y);
+	return new Block('grass', 2, x, y, true);
 }
 
 var build_stone = function(x,y){
-	return new Block('stone', 3, x, y);
+	return new Block('stone', 3, x, y, true);
+}
+
+var build_water = function(x,y, fill){
+	var water = new Block('water', -1, x, y, false);
+	if(fill > -1){
+		water.fill = fill;	
+	}else{
+		water.fill = 100;
+	}
+	
+	world.water.push(water);
+	return water;
 }
 
 var build_block_type = function(x,y,type){
 	if(type === block_types.grass){
 		return build_grass(x,y);
 	}else if(type === block_types.stone){
-		return build_stone(x.y);
+		return build_stone(x,y);
+	}else if(type === block_types.water){
+		return build_water(x,y);
 	}
 }

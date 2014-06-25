@@ -3,16 +3,17 @@ var game_board = document.getElementById("viewport");
 world_width_blocks = 1500;
 world_height_blocks = 120;
 
-var world_blocks = build_world({x:world_width_blocks, y:world_height_blocks});
+var world = build_world({x:world_width_blocks, y:world_height_blocks});
+var world_blocks = world.blocks;
 
 var board_left = game_board.offsetLeft;
 var board_top = game_board.offsetTop;
 
 var viewport = {context:game_board.getContext("2d"), width:1000, height:600};
 
-var palettes = {sky:"#C0F4FD", grass:"#00CC00", player:"FF0000", invis:"#C0F4FD", stone:"#D4D0C8"};
+var palettes = {sky:"#C0F4FD", grass:"#00CC00", player:"FF0000", invis:"#C0F4FD", stone:"#D4D0C8", water:'#5C8CD9'};
 
-var inventory = {stone:0, grass:0}
+var inventory = {stone:0, grass:0, water:100}
 
 var player = {
 	x: function(){
@@ -89,8 +90,17 @@ var determine_viewport = function(){
 var draw_blocks = function(){
 	for(var x = view_blocks[0][0]; x <= view_blocks[1][0]; x++){
 		for(var y = view_blocks[0][1]; y <= view_blocks[1][1]; y++){
-			if(world_blocks[x][y])
-				draw_block(x*pixels_per_block, y*pixels_per_block, palettes[world_blocks[x][y].type]);
+			var block;
+			if(block = world_blocks[x][y])
+			{
+				if(!block.fill)
+				{
+					draw_block(x*pixels_per_block, y*pixels_per_block, palettes[block.type]);
+				}else{
+					draw_partial_block(x*pixels_per_block, y*pixels_per_block, palettes[block.type], block.fill);
+				}
+				
+			}
 		}
 	}
 }
@@ -98,6 +108,12 @@ var draw_blocks = function(){
 var draw_block = function(x, y, color){
 	viewport.context.fillStyle = color;
 	viewport.context.fillRect(x-view_offset[0],y-view_offset[1],pixels_per_block, pixels_per_block);
+}
+
+var draw_partial_block = function(x,y,color,fill){
+	var adjust = (1-fill/100)*pixels_per_block;
+	viewport.context.fillStyle = color;
+	viewport.context.fillRect(x-view_offset[0],y-view_offset[1]+adjust,pixels_per_block, pixels_per_block-adjust);	
 }
 
 var draw_player = function(){
@@ -120,7 +136,9 @@ var block_check = function(blocks){
 	for(var i in blocks){
 		var block = blocks[i];
 		if(world_blocks[block[0]] && world_blocks[block[0]][block[1]]){
-			return [block[0],block[1]];
+			if(world_blocks[block[0]][block[1]].blocks_movement){
+				return [block[0],block[1]];
+			}				
 		}
 	}
 	return false;
@@ -231,8 +249,10 @@ var keydown = function(code){
 		if(cursor_mode === cursor_modes.placing){
 			if(block_type === block_types.grass){
 				block_type = block_types.stone;
-			}else{
+			}else if(block_type == block_types.water){
 				block_type = block_types.grass;
+			}else{
+				block_type = block_types.water;
 			}
 		}else{
 			cursor_mode = cursor_modes.placing;	
@@ -345,12 +365,14 @@ var draw_hud = function(){
 	}
 }
 
+
 var main_loop = function(delay){			
 	var start_time = Date.now();		
 	apply_gravity();
 	move_player();
 	reset_position();
 	determine_viewport();
+	settle_water();
 	draw_background();
 	draw_blocks();
 	draw_player();

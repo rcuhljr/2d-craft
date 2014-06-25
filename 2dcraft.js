@@ -11,7 +11,7 @@ var board_top = game_board.offsetTop;
 
 var viewport = {context:game_board.getContext("2d"), width:1000, height:600};
 
-var palettes = {sky:"#C0F4FD", grass:"#00CC00", player:"FF0000", invis:"#C0F4FD", stone:"#D4D0C8", water:'#5C8CD9'};
+var palettes = {sky:"#C0F4FD", grass:"#00CC00", player:"FF0000", invis:"#C0F4FD", stone:"#C4C0B8", water:'#5C8CD9'};
 
 var inventory = {stone:0, grass:0, water:100}
 

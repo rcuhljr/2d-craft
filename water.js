@@ -1,3 +1,5 @@
+//water flowing upwards, todo?
+
 var settle_water = function(){
 	var water_bodies = get_water_bodies();
 	for(var i in water_bodies){
@@ -104,8 +106,22 @@ var settle_body = function(body){
 	}
 }
 
+var get_water_blocks = function(){
+	//settle all water in the whole world, unsure when this will cause slow downs.
+	//return world.water
+	return world.water.slice(0).filter(function(block){
+		if(block.x >= view_blocks[0][0] && block.x <= view_blocks[1][0])
+		{
+			if(block.y >= view_blocks[0][1] && block.y <= view_blocks[1][1]){
+				return true;
+			}
+		}
+		return false;
+	});
+}
+
 var get_water_bodies = function(){
-	var water_blocks = world.water;
+	var water_blocks = get_water_blocks();
 	var visited = [];
 	var water_sets = [];
 
@@ -126,7 +142,7 @@ var get_water_bodies = function(){
 var get_connected = function(edges, found, foundhash){
 	var new_finds = [];
 	for(var i in edges){
-		var neighbors = get_neighbors(edges[i]);
+		var neighbors = get_neighbors(edges[i], false);
 		for(var j in neighbors){
 			var block = neighbors[j];
 			if(block.type === block_types.water && !foundhash[block.x+':'+block.y]){
@@ -144,15 +160,26 @@ var get_connected = function(edges, found, foundhash){
 	
 }
 
-var get_neighbors = function(block){
-	return [
-		world_blocks[block.x-1][block.y-1],
-		world_blocks[block.x][block.y-1],
-		world_blocks[block.x+1][block.y-1],
+var get_neighbors = function(block, caddycorner){
+	if(caddycorner)
+	{
+		return [
+			world_blocks[block.x-1][block.y-1],
+			world_blocks[block.x][block.y-1],
+			world_blocks[block.x+1][block.y-1],
+			world_blocks[block.x-1][block.y],
+			world_blocks[block.x+1][block.y],
+			world_blocks[block.x-1][block.y+1],
+			world_blocks[block.x][block.y+1],
+			world_blocks[block.x+1][block.y+1],
+			].filter(function(item){return item;});	
+	}
+
+	return [		
+		world_blocks[block.x][block.y-1],		
 		world_blocks[block.x-1][block.y],
-		world_blocks[block.x+1][block.y],
-		world_blocks[block.x-1][block.y+1],
-		world_blocks[block.x][block.y+1],
-		world_blocks[block.x+1][block.y+1],
-	].filter(function(item){return item;});
+		world_blocks[block.x+1][block.y],		
+		world_blocks[block.x][block.y+1],		
+		].filter(function(item){return item;});	
+	
 }
